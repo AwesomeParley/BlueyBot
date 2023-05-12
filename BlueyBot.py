@@ -3,11 +3,13 @@ import discord
 import random
 import os
 import configparser
+from sys import exit
 
 # Check if the settings file exists, if not create it
 def create_default_settings():
     config = configparser.ConfigParser()
     config['DEFAULT'] = {
+        'Token': 'Insert Bot Token Here',
         'Seconds to respond': '120',
         'Daily': 'False',
         'Command': '!guess',
@@ -20,6 +22,7 @@ def read_settings():
     config = configparser.ConfigParser()
     config.read('settings.txt')
     settings = {
+        'Token': config.get('DEFAULT', 'Token'),
         'Seconds to respond': config.getint('DEFAULT', 'Seconds to respond'),
         'Daily': config.getboolean('DEFAULT', 'Daily'),
         'Command': config.get('DEFAULT', 'Command'),
@@ -30,16 +33,19 @@ def read_settings():
 if not os.path.exists('settings.txt'):
     create_default_settings()
 
-print(discord.__version__)
-intents = discord.Intents.all()
-client = discord.Client(intents=intents)
-
 settings = read_settings()
+token = settings['Token']
 seconds_to_respond = settings['Seconds to respond']
 daily = settings['Daily'] #To Be Implemented
 command = settings['Command']
 spoilers = settings['Image spoilers'] #To Be Implemented
 
+if(token == 'Insert Bot Token Here'):
+    print("change \"Insert Bot Token Here\" in setting.txt to your discord token before running!")
+    exit()
+else:
+    intents = discord.Intents.all()
+    client = discord.Client(intents=intents)
 
 episodes_file = "episodes.txt"
 max_attempts = 5 #Only change if you want to use your own images, and you have a different number of them.
@@ -59,7 +65,7 @@ async def on_message(message):
         y = 1
         while y <= max_attempts:
             episode = get_episode(x)
-            filename = f'{x}_{y}.jpg' # Format the filename string with x and y
+            filename = f'images\\{x}_{y}.jpg' # Format the filename string with x and y
             with open(filename, 'rb') as f:
                 file = discord.File(f, filename='nice_try.jpg') # Named "nice_try.jpg" so that the smart people get trolled.
                 await message.reply(f'You are on guess {y}. Guess the episode.', file=file)
@@ -87,4 +93,4 @@ def get_episode(x):
     episode = episodes[x-1] if len(episodes) >= x else None
     return episode.strip() if episode else None
 
-client.run('Insert Bot Token Here')
+client.run(token)

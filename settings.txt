@@ -1,4 +1,5 @@
 [DEFAULT]
+token = Insert Bot Token Here
 seconds to respond = 120
 daily = False
 command = !guess
