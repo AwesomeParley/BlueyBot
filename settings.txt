@@ -1,0 +1,6 @@
+[DEFAULT]
+seconds to respond = 120
+daily = False
+command = !guess
+image spoilers = False
+
