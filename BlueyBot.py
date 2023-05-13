@@ -13,7 +13,8 @@ def create_default_settings():
         'Seconds to respond': '120',
         'Daily': 'False',
         'Command': '!guess',
-        'Image spoilers': 'False'
+        'Image spoilers': 'False',
+        'Reactions': 'True'
     }
     with open('settings.txt', 'w') as configfile:
         config.write(configfile)
@@ -27,6 +28,7 @@ def read_settings():
         'Daily': config.getboolean('DEFAULT', 'Daily'),
         'Command': config.get('DEFAULT', 'Command'),
         'Image spoilers': config.getboolean('DEFAULT', 'Image spoilers'),
+        'Reactions': config.getboolean('DEFAULT', 'Reactions'),
     }
     return settings
 
@@ -38,7 +40,8 @@ token = settings['Token']
 seconds_to_respond = settings['Seconds to respond']
 daily = settings['Daily'] #To Be Implemented
 command = settings['Command']
-spoilers = settings['Image spoilers'] #To Be Implemented
+spoilers = settings['Image spoilers']
+reactions = settings['Reactions']
 
 if(token == 'Insert Bot Token Here'):
     print("change \"Insert Bot Token Here\" in setting.txt to your discord token before running!")
@@ -60,14 +63,17 @@ async def on_message(message):
         return
     if message.content == command:
         x = random.randint(1, 87)
-        while x == 44 or x == 45: #Will fix eventually, but for right now, 
+        while x == 44 or x == 45: #Will fix eventually, but for right now, just don't use those
             x = random.randint(1, 87)
         y = 1
         while y <= max_attempts:
             episode = get_episode(x)
             filename = f'images\\{x}_{y}.jpg' # Format the filename string with x and y
             with open(filename, 'rb') as f:
-                file = discord.File(f, filename='nice_try.jpg') # Named "nice_try.jpg" so that the smart people get trolled.
+                if spoilers: 
+                    file = discord.File(f, filename='SPOILER_nice_try.jpg') # Named "SPOILER_nice_try.jpg" so that the smart people get trolled, and the image is set as a spoiler.
+                else:
+                    file = discord.File(f, filename='nice_try.jpg') # Named "nice_try.jpg" so that the smart people get trolled.
                 await message.reply(f'You are on guess {y}. Guess the episode.', file=file)
             
             def check(m):
@@ -80,13 +86,24 @@ async def on_message(message):
                 return
             
             if guess.content.lower() == episode.lower():
+                if reactions:
+                    try:
+                        await guess.add_reaction('✅')
+                    except:
+                        print(f"unable to react to {guess.author}\'s message with ✅")
                 await message.reply(f"**Wackadoo!** You got it!\nThis episode of Bluey was called: *{episode}*")
                 return
+            elif reactions:
+                try:
+                    await guess.add_reaction('❌')
+                except:
+                    print(f"unable to react to {guess.author}\'s message with ❌")
             
             y += 1
         
         await message.reply(f"**Ah Biscuits!**\nThis episode of Bluey was called: *{episode}*")
 
+# gets the episode name
 def get_episode(x):
     with open(episodes_file) as f:
         episodes = f.readlines()

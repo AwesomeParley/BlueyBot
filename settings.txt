@@ -1,7 +1,8 @@
 [DEFAULT]
-token = Insert Bot Token Here
+token = NzU5NDc3NjU3NDM1MzczNTk5.GFt9sq.ioVr95UzHjLnf1faF6v7QItxoFXfT133Fndfx0
 seconds to respond = 120
 daily = False
 command = !guess
 image spoilers = False
+reactions = True
 
