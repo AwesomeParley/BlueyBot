@@ -3,6 +3,7 @@ token = Insert Bot Token Here
 seconds to respond = 120
 daily = False
 command = !guess
-image spoilers = False
+spoilers = False
 reactions = True
+text only = False
 
