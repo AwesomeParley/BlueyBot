@@ -48,7 +48,7 @@ reactions = settings['Reactions']
 textOnly = settings['Text only']
 
 if(token == 'Insert Bot Token Here'):
-    print("change \"Insert Bot Token Here\" in setting.txt to your discord token before running!")
+    print("change \"Insert Bot Token Here\" in setting.txt to your discord bot token before running!")
     time.sleep(30) # added this so people using the exe or just running the python on it's own can read the message above.
     exit()
 else:
@@ -57,7 +57,7 @@ else:
 
 if not textOnly:
     episodes_file = "episodes.txt"
-    max_attempts = 1 #Only change if you want to use your own images, and you have a different number of them.
+    max_attempts = 5 #Only change if you want to use your own images, and you have a different number of them.
 else:
     episodes_file = "episodes_in_order.txt"
     max_attempts = 2 #Only change if you want to use your own text, and you have a different number of them.
