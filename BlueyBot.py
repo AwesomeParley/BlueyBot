@@ -48,7 +48,7 @@ reactions = settings['Reactions']
 textOnly = settings['Text only']
 
 if(token == 'Insert Bot Token Here'):
-    print("change \"Insert Bot Token Here\" in setting.txt to your discord bot token before running!")
+    print("Change \"Insert Bot Token Here\" in setting.txt to your discord bot token before running!")
     time.sleep(30) # added this so people using the exe or just running the python on it's own can read the message above.
     exit()
 else:
@@ -80,7 +80,7 @@ async def on_message(message):
         y = 1
         while y <= max_attempts:
             episode = get_episode(x)
-            if not textOnly:
+            if not textOnly: # Image Mode
                 filename = f'images\\{x}_{y}.jpg' # Format the filename string with x and y
                 with open(filename, 'rb') as f:
                     if spoilers: 
@@ -92,30 +92,35 @@ async def on_message(message):
                 else:
                     guess_amount = ''
                 await message.reply(f'{guess_amount}Guess the episode.', file=file)
-            else:
-                with open('episode_descriptions.txt') as f:
+            else: # Text Only Mode
+                with open('episode_descriptions.txt') as f: # Get description, then if spoilers are true, then add them to the message
                     episode_descriptions = f.readlines()
                     episode_description = episode_descriptions[x-1] if len(episode_descriptions) >= x else None
-                    description = episode_description.strip() if episode_description else None
+                    if spoilers: 
+                        description = ("||" + episode_description.strip() + "||" if episode_description else None)
+                    else:
+                        description = episode_description.strip() if episode_description else None
                 if not max_attempts == 1:
                     guess_amount = f'You are on guess {y}/{max_attempts}. '
                 else:
                     guess_amount = ''
-                if spoilers:
-                    await message.reply(f'{guess_amount}Guess the episode:\n\n||{description}||')
+                if y > 1 and reactions: #instead of sending a whole extra message each time they get it wrong, just edit the previous message the bot sent. Also this only is helpful if reactions are on.
+                    await editable.edit(content = f'{guess_amount}Guess the episode:\n\n{description}')
                 else:
-                    await message.reply(f'{guess_amount}Guess the episode:\n\n{description}')
+                    editable = await message.reply(f'{guess_amount}Guess the episode:\n\n{description}')
             
-            def check(m):
+            def check(m): # checks if the message was sent by the same person and in the same channel
                 return m.author == message.author and m.channel == message.channel
             
-            try:
+            try: # wait for a message in that same channel by that same person. 
                 guess = await client.wait_for('message', check=check, timeout=seconds_to_respond)
             except asyncio.TimeoutError:
                 await message.channel.send(f"Sorry, you took too long to guess! (limit is {seconds_to_respond} seconds.)")
                 return
-            
-            if guess.content.lower() == episode.lower():
+
+            if guess.content == command: #checks if they sent a command instead
+                return
+            elif guess.content.replace('.', '', -1).lower() == episode.replace('.', '', -1).lower(): # checks if they guessed right
                 if reactions:
                     try:
                         await guess.add_reaction('✅')
@@ -132,6 +137,7 @@ async def on_message(message):
             y += 1
         
         await message.reply(f"**Ah Biscuits!**\nThis episode of Bluey was called: *{episode}*")
+        return
 
 # gets the episode name
 def get_episode(x):
@@ -140,4 +146,9 @@ def get_episode(x):
     episode = episodes[x-1] if len(episodes) >= x else None
     return episode.strip() if episode else None
 
-client.run(token)
+try:
+    client.run(token)
+except:
+    print(f"Your token \"{token}\" is not valid or there was an error.\nPlease check the Token in \"settings.txt\" and try agian.")
+    time.sleep(30)
+    exit()
