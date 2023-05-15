@@ -46,4 +46,6 @@ Here's some planned features:
 - Server settings that can be edited by admins/owners of each server through commands
 - Daily mode (Server-wide guessing at a specified time set by admins)
 - Slash commands
+- Image Mode updates from [Blueydle](https://blueydle.fun/)
+- Servers and Users can choose between [Image](https://github.com/AwesomeParley/BlueyBot#image-mode) and [Text Only](https://github.com/AwesomeParley/BlueyBot#text-mode) modes
 - Much more (TBD)
