@@ -5,7 +5,9 @@ This bot is very much inspired by and based on [Blueydle](https://blueydle.fun/)
 
 ## Features
 ### !guess command
-This is the default command. This command can be [changed in the settings](https://github.com/AwesomeParley/BlueyBot/edit/main/README.md#settings).
+"!guess" is the default command which can be [changed in the settings](https://github.com/AwesomeParley/BlueyBot#settings) if you dislike it, or if it conflicts with other commands other bots may have. There are currently 2 modes for the !guess command; [Image Mode](https://github.com/AwesomeParley/BlueyBot#image-mode) and [Text Mode](https://github.com/AwesomeParley/BlueyBot#text-mode). These modes are [changed in the settings](https://github.com/AwesomeParley/BlueyBot#settings)  as well via the option "Text only". 
+
+Although more modes may be added in future updates, there are no plans or ideas for any currently. If you have any ideas for new modes, please [open an issue](https://github.com/AwesomeParley/BlueyBot/issues).
 #### Image Mode
 Allows users to see a screenshot from an episode and guess the episode based on it. 
 You have a default of 120 seconds per image to guess what the episode is from; if you fail, you get another image from the same episode to guess. 
@@ -37,7 +39,8 @@ Some limitations that I can fix, but as of now are not important:
 - No slash commands
 - No leaderboard capabilities
 - Only 87 different image episodes (all are from on [Blueydle](https://blueydle.fun/).)
-- Server specific stuff
+- Can't currently do any server specific stuff
+These limitations are only in the current version, and are not a representation of what is not possible.
 ## Future Features
 Here's some planned features:
 - Server settings that can be edited by admins/owners of each server through commands
