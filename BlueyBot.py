@@ -3,7 +3,8 @@ import discord
 import random
 import os
 import configparser
-import time #will be used for daily in future update.
+import time #will be used for daily
+import urllib.request #will be used to get images from Blueydle if any
 from sys import exit
 
 # Check if the settings file exists, if not create it
@@ -16,7 +17,8 @@ def create_default_settings():
         'Command': '!guess',
         'Spoilers': 'False',
         'Reactions': 'True',
-        'Text only': 'False'
+        'Text only': 'False',
+        'Allow image download': 'False'
     }
     with open('settings.txt', 'w') as configfile:
         config.write(configfile)
@@ -32,6 +34,7 @@ def read_settings():
         'Spoilers': config.getboolean('DEFAULT', 'Spoilers'),
         'Reactions': config.getboolean('DEFAULT', 'Reactions'),
         'Text only': config.getboolean('DEFAULT', 'Text only'),
+        'Allow image download': config.getboolean('DEFAULT', 'Allow image download')
     }
     return settings
 
@@ -46,6 +49,7 @@ command = settings['Command']
 spoilers = settings['Spoilers']
 reactions = settings['Reactions']
 textOnly = settings['Text only']
+allowDL = settings['Allow image download']
 
 if(token == 'Insert Bot Token Here'):
     print("Change \"Insert Bot Token Here\" in setting.txt to your discord bot token before running!")
@@ -54,6 +58,48 @@ if(token == 'Insert Bot Token Here'):
 else:
     intents = discord.Intents.all()
     client = discord.Client(intents=intents)
+
+if not textOnly:
+    # Get a list of all files in the directory
+    files = os.listdir("./images")
+    # Filter the list to only include files that match the naming pattern
+    image_files = [file for file in files if file.endswith("_1.jpg")]
+    # Sort the image files based on the increasing number after "_1"
+    sorted_files = sorted(image_files, key=lambda x: int(x.split("_")[0]))
+    # Check the last image in the sorted list
+    if sorted_files:
+        episode_amount = int(sorted_files[-1].split("_")[0])
+    else:
+        print("No downloaded images found. Please download them to use Image Mode.\nIf you don't plan on using image mode, set \"Text only\" mode to True in settings.txt.")
+        time.sleep(30)
+        exit()
+
+    if allowDL and False:
+        #try to download any images that have yet to be downloaded from Blueydle (sorry Blueydle owner, I will make it not run often at all.)
+        failDLCount = 0.0
+        x = episode_amount+1
+        while failDLCount < 7:
+            url = f"https://images.blueydle.fun/{x}/1.jpg"
+            filename = f"{x}_1.jpg"
+            try:
+                urllib.request.urlretrieve(url, filename)
+                print(f"Downloaded {filename}")
+                failDLCount = 0
+                for y in range(2, 6):
+                    url = f"https://images.blueydle.fun/{x}/{y}.jpg"
+                    filename = f"{x}_{y}.jpg"
+                    try:
+                        urllib.request.urlretrieve(url, filename)
+                        print(f"Downloaded {filename}")
+                    except urllib.error.HTTPError:
+                        print(f"Failed to download {filename}.")
+            except urllib.error.HTTPError:
+                failDLCount += 1
+                if failDLCount < 7:
+                    print(f"Failed to download {filename}. Checking if there are more...")
+                else:
+                    print(f"Failed to download {filename}.")
+            x += 1
 
 if not textOnly:
     episodes_file = "episodes.txt"
@@ -72,7 +118,7 @@ async def on_message(message):
         return
     if message.content == command:
         if not textOnly:
-            x = random.randint(1, 87) #There are 87 episodes with images supplied by Blueydle currently.
+            x = random.randint(1, episode_amount)
             while x == 44 or x == 45: #Will fix eventually, but for right now, just don't use those
                 x = random.randint(1, 87)
         else:

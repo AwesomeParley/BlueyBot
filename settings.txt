@@ -6,4 +6,5 @@ command = !guess
 spoilers = False
 reactions = True
 text only = False
+allow image download = False
 
