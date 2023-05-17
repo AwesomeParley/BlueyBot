@@ -76,7 +76,7 @@ if not textOnly:
 
     if allowDL and False:
         #try to download any images that have yet to be downloaded from Blueydle (sorry Blueydle owner, I will make it not run often at all.)
-        failDLCount = 0.0
+        failDLCount = 0
         x = episode_amount+1
         while failDLCount < 7:
             url = f"https://images.blueydle.fun/{x}/1.jpg"
@@ -106,8 +106,7 @@ if not textOnly:
     max_attempts = 5 #Only change if you want to use your own images, and you have a different number of them.
 else:
     episodes_file = "episodes_in_order.txt"
-    max_attempts = 2 #Only change if you want to use your own text, and you have a different number of them.
-
+    max_attempts = 2 #Only change if you want to use your own text or you want to change the number of attempts.
 @client.event
 async def on_ready():
     print('Logged in as {0.user} and ready for some Bluey episode guessing Action.'.format(client))
