@@ -5,6 +5,6 @@ daily = False
 command = !guess
 spoilers = False
 reactions = True
-text only = False
+force text only = False
 allow image download = False
 

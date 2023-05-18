@@ -2,6 +2,7 @@ import asyncio
 import discord
 import random
 import os
+import json
 import configparser
 import time #will be used for daily
 import urllib.request #will be used to get images from Blueydle if any
@@ -17,11 +18,25 @@ def create_default_settings():
         'Command': '!guess',
         'Spoilers': 'False',
         'Reactions': 'True',
-        'Text only': 'False',
+        'Force text only': 'False',
         'Allow image download': 'False'
     }
     with open('settings.txt', 'w') as configfile:
         config.write(configfile)
+
+def create_server_settings():
+    # Create the initial server settings dictionary
+    server_settings = {
+        "image_update_counter": 0,
+        "server_ids": [],
+        "server_settings": {}
+    }
+    # Write the initial server settings to a JSON file
+    with open("server_settings.json", "w") as file:
+        json.dump(server_settings, file, indent=4)
+
+def update_server_settings():
+    pass #add update server settings here
 
 def read_settings():
     config = configparser.ConfigParser()
@@ -33,14 +48,17 @@ def read_settings():
         'Command': config.get('DEFAULT', 'Command'),
         'Spoilers': config.getboolean('DEFAULT', 'Spoilers'),
         'Reactions': config.getboolean('DEFAULT', 'Reactions'),
-        'Text only': config.getboolean('DEFAULT', 'Text only'),
+        'Force text only': config.getboolean('DEFAULT', 'Force text only'),
         'Allow image download': config.getboolean('DEFAULT', 'Allow image download')
     }
     return settings
 
 if not os.path.exists('settings.txt'):
     create_default_settings()
+if not os.path.exists('server_settings.json'):
+    create_server_settings()
 
+#Read settings from settings.txt
 settings = read_settings()
 token = settings['Token']
 seconds_to_respond = settings['Seconds to respond']
@@ -48,8 +66,22 @@ daily = settings['Daily'] #To Be Implemented
 command = settings['Command']
 spoilers = settings['Spoilers']
 reactions = settings['Reactions']
-textOnly = settings['Text only']
+forceTextOnly = settings['Force text only']
 allowDL = settings['Allow image download']
+
+#Read settings from server_settings.json
+with open("server_settings.json", "r") as file:
+    server_settings = json.load(file)
+if server_settings["image_update_counter"] == 0 and allowDL:
+    allowImageUpdate = True
+else:
+    allowImageUpdate = False
+    if server_settings["image_update_counter"] == 10:
+        server_settings["image_update_counter"] = 0
+    else:
+        server_settings["image_update_counter"] += 1
+if len(server_settings["server_ids"]) > 0:
+    pass #add reading specific server settings here
 
 if(token == 'Insert Bot Token Here'):
     print("Change \"Insert Bot Token Here\" in setting.txt to your discord bot token before running!")
@@ -59,7 +91,7 @@ else:
     intents = discord.Intents.all()
     client = discord.Client(intents=intents)
 
-if not textOnly:
+if not forceTextOnly:
     # Get a list of all files in the directory
     files = os.listdir("./images")
     # Filter the list to only include files that match the naming pattern
@@ -74,7 +106,7 @@ if not textOnly:
         time.sleep(30)
         exit()
 
-    if allowDL and False:
+    if allowDL and (allowImageUpdate or False):
         #try to download any images that have yet to be downloaded from Blueydle (sorry Blueydle owner, I will make it not run often at all.)
         failDLCount = 0
         x = episode_amount+1
@@ -101,7 +133,7 @@ if not textOnly:
                     print(f"Failed to download {filename}.")
             x += 1
 
-if not textOnly:
+if not forceTextOnly:
     episodes_file = "episodes.txt"
     max_attempts = 5 #Only change if you want to use your own images, and you have a different number of them.
 else:
@@ -116,7 +148,7 @@ async def on_message(message):
     if message.author == client.user:
         return
     if message.content == command:
-        if not textOnly:
+        if not forceTextOnly:
             x = random.randint(1, episode_amount)
             while x == 44 or x == 45: #Will fix eventually, but for right now, just don't use those
                 x = random.randint(1, 87)
@@ -125,7 +157,7 @@ async def on_message(message):
         y = 1
         while y <= max_attempts:
             episode = get_episode(x)
-            if not textOnly: # Image Mode
+            if not forceTextOnly: # Image Mode
                 filename = f'images\\{x}_{y}.jpg' # Format the filename string with x and y
                 with open(filename, 'rb') as f:
                     if spoilers: 
