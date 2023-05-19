@@ -5,6 +5,7 @@ import os
 import json
 import configparser
 import time #will be used for daily
+import datetime #will be used for daily as well
 import urllib.request #will be used to get images from Blueydle if any
 from sys import exit
 
@@ -24,6 +25,10 @@ def create_default_settings():
     with open('settings.txt', 'w') as configfile:
         config.write(configfile)
 
+def update_server_settings():
+    with open("server_settings.json", "w") as file:
+        json.dump(server_settings, file, indent=4)
+
 def create_server_settings():
     # Create the initial server settings dictionary
     server_settings = {
@@ -32,11 +37,7 @@ def create_server_settings():
         "server_settings": {}
     }
     # Write the initial server settings to a JSON file
-    with open("server_settings.json", "w") as file:
-        json.dump(server_settings, file, indent=4)
-
-def update_server_settings():
-    pass #add update server settings here
+    update_server_settings()
 
 def read_settings():
     config = configparser.ConfigParser()
@@ -139,9 +140,14 @@ if not forceTextOnly:
 else:
     episodes_file = "episodes_in_order.txt"
     max_attempts = 2 #Only change if you want to use your own text or you want to change the number of attempts.
+
 @client.event
 async def on_ready():
     print('Logged in as {0.user} and ready for some Bluey episode guessing Action.'.format(client))
+    get_servers()
+async def on_guild_join(guild):
+    print(f'Joined a new guild: {guild.name} (ID: {guild.id})')
+    add_server(guild)
 
 @client.event
 async def on_message(message):
@@ -222,6 +228,28 @@ def get_episode(x):
         episodes = f.readlines()
     episode = episodes[x-1] if len(episodes) >= x else None
     return episode.strip() if episode else None
+
+#Checks if each server is in the list. If it's not, it adds it. 
+def get_servers():
+    for guild in client.guilds: 
+        if not guild.id in server_settings["server_ids"]:
+            add_server(guild)
+        else: 
+            print(guild.name + " (" + str(guild.id) + ") already in list.")
+
+# add server to server_settings.json
+def add_server(guild):
+    server_settings["server_ids"].append(guild.id)
+    print(guild.name + " (" + str(guild.id) + ") added to the list.")
+    default_server_settings = {
+    "server_command": "!guess",
+    "default_mode": 1,
+    "force_mode": False,
+    "daily": False,
+    "daily_time": 1684468200, #figure out how time would be inputted
+    "daily_channel": 1
+}
+    #update_server_settings() Note to self: add this when ready to implement fully
 
 try:
     client.run(token)
