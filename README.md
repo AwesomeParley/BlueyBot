@@ -1,7 +1,7 @@
 # BlueyBot
-Discord Bot for guessing Bluey Episodes from images and descriptions.
+Discord Bot for guessing Bluey Episodes from images and/or descriptions.
 
-This bot is very much inspired by and based on [Blueydle](https://blueydle.fun/).
+This bot is very much inspired by, and based on [Blueydle](https://blueydle.fun/).
 
 ## Features
 ### !guess command
@@ -43,9 +43,10 @@ Some limitations that I can fix, but as of now are not important:
 These limitations are only in the current version, and are not a representation of what is not possible.
 ## Future Features
 Here's some planned features:
-- Server settings that can be edited by admins/owners of each server through commands
-- Daily mode (Server-wide guessing at a specified time set by admins)
-- Slash commands
-- Image Mode updates from [Blueydle](https://blueydle.fun/)
-- Servers and Users can choose between [Image](https://github.com/AwesomeParley/BlueyBot#image-mode) and [Text Only](https://github.com/AwesomeParley/BlueyBot#text-mode) modes
+- Server settings that can be edited by admins/owners of each server through commands [working on]
+- Daily mode (Server-wide guessing at a specified time set by admins) [working on]
+- Slash commands [confused by, but working on]
+- Image Mode updates from [Blueydle](https://blueydle.fun/) [working on]
+- Servers and Users can choose between [Image](https://github.com/AwesomeParley/BlueyBot#image-mode) and [Text Only](https://github.com/AwesomeParley/BlueyBot#text-mode) modes [working on]
+- Settings explanations inside settings.txt [working on]
 - Much more (TBD)
