@@ -25,6 +25,7 @@ Allows users to read a description of an episode and guess the episode based on 
 You have a default of 120 seconds per guess to figure out what the episode is; if you fail, you get another guess.
 You get 2 guesses, and if you fail both, it tells you what the episode is. 
 This mode is a lot less fun in my personal opinion, but if you can't use images due to bandwidth limitations, this would be the recommended way to go.
+Also, if ```allow after images = True``` in [```settings.txt```](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt), the bot will show the 5th image, if it has it, after you win.
 
 <img src="https://github.com/AwesomeParley/BlueyBot/assets/90052285/6153986d-84a3-4340-be47-863c8acf5657" width=50% height=50%>
 
@@ -50,7 +51,7 @@ Some limitations that I can fix, but as of now are not important:
 - You can get the same episode multiple times in a row due to the nature of randomness
 - No slash commands
 - No leaderboard capabilities
-- Only 87 different image episodes (all are from on [Blueydle](https://blueydle.fun/).)
+- Only 87 (soon 91) different image episodes (all are from on [Blueydle](https://blueydle.fun/).)
 - Can't currently do any server specific stuff
 These limitations are only in the current version, and are not a representation of what is not possible.
 
