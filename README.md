@@ -27,7 +27,10 @@ You get 2 guesses, and if you fail both, it tells you what the episode is.
 This mode is a lot less fun in my personal opinion, but if you can't use images due to bandwidth limitations, this would be the recommended way to go.
 Also, if ```allow after images = True``` in [```settings.txt```](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt), the bot will show the 5th image, if it has it, after you win.
 
-<img src="https://github.com/AwesomeParley/BlueyBot/assets/90052285/6153986d-84a3-4340-be47-863c8acf5657" width=50% height=50%>
+<p float="center">
+<img src="https://github.com/AwesomeParley/BlueyBot/assets/90052285/de6cf5ca-5dd9-4688-9a45-8524ce123a04" width=49% height=49%>
+<img src="https://github.com/AwesomeParley/BlueyBot/assets/90052285/70b92504-edab-4cdb-b2af-67c5f186cee2" width=49% height=49%>
+</p>
 
 ### Settings
 Allows the owner to set settings for the bot. Setting include:
@@ -59,7 +62,7 @@ These limitations are only in the current version, and are not a representation 
 Here's some planned features:
 - Server settings that can be edited by admins/owners of each server through commands [working on]
 - Daily mode (Server-wide guessing at a specified time set by admins) [working on]
-- Slash commands [confused by, but working on]
+- Slash commands [confused by]
 - Image Mode updates from [Blueydle](https://blueydle.fun/) [working on]
 - Servers and Users can choose between [Image](https://github.com/AwesomeParley/BlueyBot#image-mode) and [Text Only](https://github.com/AwesomeParley/BlueyBot#text-mode) modes [working on]
 - Settings explanations inside [```settings.txt```](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt) [working on]
