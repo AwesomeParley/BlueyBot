@@ -1,10 +1,12 @@
 [DEFAULT]
 token = Insert Bot Token Here
 seconds to respond = 120
-daily = False
+allow cooperative = True
+allow daily = False
 command = !guess
 spoilers = False
 reactions = True
+allow after images = True
 force text only = False
 allow image download = False
 
