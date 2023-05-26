@@ -87,6 +87,7 @@ else:
     allowImageUpdate = False
     if server_settings["image_update_counter"] == 10:
         server_settings["image_update_counter"] = 0
+        update_server_settings(server_settings)
     else:
         server_settings["image_update_counter"] += 1
         update_server_settings(server_settings)
@@ -292,15 +293,32 @@ async def on_message(message):
     # Fun Guess Game! 
     if str(message.content).startswith(command):
         z = 0
-        if not forceTextOnly:
-            x = random.randint(1, episode_amount)
-            while x == 44 or x == 45: #Will fix eventually, but for right now, just don't use those
-                x = random.randint(1, 87)
-        else:
-            x = random.randint(1, 147) #There are 147 episodes avalible currently.
+        def extract_number_from_command(command):
+            last_word = command.split()[-1]
+            if last_word.isdigit():
+                return int(last_word)
+            return None
+        def randEpisode():
+            if not forceTextOnly:
+                x = random.randint(1, episode_amount)
+                while x == 44 or x == 45: #Will fix eventually, but for right now, just don't use those
+                    x = random.randint(1, episode_amount)
+                return x
+            else:
+                return random.randint(1, 147) #There are 147 episodes avalible currently.
+        try:
+            server_id = message.guild.id
+            if server_settings["server_settings"][server_id]["test_server"] == True:
+                if extract_number_from_command(message.content) == None:
+                    x = randEpisode()
+                else:
+                    x = extract_number_from_command(message.content)
+        except:
+            x = randEpisode()
+        episode = get_episode(x)
+        print(f"Episode ID: {x}")
         y = 1
         while y <= max_attempts:
-            episode = get_episode(x)
             if z == 0:
                 if not forceTextOnly: # Image Mode
                     filename = f'images\\{x}_{y}.jpg' # Format the filename string with x and y
@@ -343,7 +361,7 @@ async def on_message(message):
                 await message.channel.send(f"Sorry, you took too long to guess! (limit is {seconds_to_respond} seconds.)\nThis episode of bluey was called *{episode}*")
                 return
 
-            if guess.content == command: #checks if they sent a command instead
+            if any(guess.content.startswith(item) for item in [command, '!serversetup', '!setupserver']): #checks if they sent a command instead
                 return
             elif guess.content.replace('.', '', -1).replace(' ', '', -1).lower() == episode.replace('.', '', -1).replace(' ', '', -1).lower(): # checks if they guessed right
                 if reactions:
@@ -412,6 +430,7 @@ def add_server(guild):
     server_settings["server_ids"].append(guild.id)
     print(guild.name + " (" + str(guild.id) + ") added to the list.")
     new_server_settings = {
+    "server_name": guild.name,
     "server_command": "!guess",
     "default_mode": 1,
     "force_mode": False,
