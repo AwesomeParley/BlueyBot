@@ -13,7 +13,7 @@ Allows users to see a screenshot from an episode then guess the episode based on
 You have a default of 120 seconds per image to guess what the episode is from; if you fail, you get another image from the same episode to guess. 
 Each image should give you more info about the episode until the very last one where it will be very obvious.
 You get 5 guesses, and if you fail all 5, it tells you what episode the image is from.
-Also, if ```allow after images = True``` in [```settings.txt```](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt), the bot will show all the remaining images, if any, after you win. 
+Also, if `allow after images = True` in [`settings.txt`](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt), the bot will show all the remaining images, if any, after you win. 
 
 <p float="center">
   <img alt="Gif representing image mode without after images" src="https://github.com/AwesomeParley/BlueyBot/assets/90052285/9b31f0b2-651e-486b-ada0-492e819a372b" width=49% height=49%>
@@ -25,12 +25,15 @@ Allows users to read a description of an episode and guess the episode based on 
 You have a default of 120 seconds per guess to figure out what the episode is; if you fail, you get another guess.
 You get 2 guesses, and if you fail both, it tells you what the episode is. 
 This mode is a lot less fun in my personal opinion, but if you can't use images due to bandwidth limitations, this would be the recommended way to go.
-Also, if ```allow after images = True``` in [```settings.txt```](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt), the bot will show the 5th image, if it has it, after you win.
+Also, if `allow after images = True` in [`settings.txt`](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt), the bot will show the 5th image, if it has it, after you win.
 
 <p float="center">
 <img src="https://github.com/AwesomeParley/BlueyBot/assets/90052285/de6cf5ca-5dd9-4688-9a45-8524ce123a04" width=49% height=49%>
 <img src="https://github.com/AwesomeParley/BlueyBot/assets/90052285/70b92504-edab-4cdb-b2af-67c5f186cee2" width=49% height=49%>
 </p>
+
+#### Cooperative Mode
+Allows users to use `!guess coop` to allow any user in the same channel to guess. This currently conflicts with any user that uses `!guess` before or during cooperative mode. Everyone gets a total of 10 guesses on [Image Mode](https://github.com/AwesomeParley/BlueyBot#image-mode), where each 2 guesses, you get another image. ([Text Mode](https://github.com/AwesomeParley/BlueyBot#text-mode) has yet to be tested.)
 
 ### Settings
 Allows the owner to set settings for the bot. Setting include:
@@ -42,19 +45,20 @@ Allows the owner to set settings for the bot. Setting include:
 - Force Text Only mode (default is False)
 - Allow image download from [Blueydle](https://blueydle.fun/) (default is False)
 
-All of these can be found in [```settings.txt```](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt)
+All of these can be found in [`settings.txt`](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt)
 
 ### Extra features
 Here are some extra features that are too small to list or don't really matter to most users
 - Due to the bot not using slash commands, it's possible to guess episodes via DMs.
-- If you are so inclined to, you can absolutely change the images, descriptions, and answers to whatever you want using the images folder, [```episodes.txt```](https://github.com/AwesomeParley/BlueyBot/blob/main/episodes.txt), [```episodes_in_order.txt```](https://github.com/AwesomeParley/BlueyBot/blob/main/episodes_in_order.txt), and [```episode_descriptions.txt```](https://github.com/AwesomeParley/BlueyBot/blob/main/episode_descriptions.txt).
+- If you are so inclined to, you can absolutely change the images, descriptions, and answers to whatever you want using the images folder, [`episodes.txt`](https://github.com/AwesomeParley/BlueyBot/blob/main/episodes.txt), [`episodes_in_order.txt`](https://github.com/AwesomeParley/BlueyBot/blob/main/episodes_in_order.txt), and [`episode_descriptions.txt`](https://github.com/AwesomeParley/BlueyBot/blob/main/episode_descriptions.txt).
+- Image Mode updates from [Blueydle](https://blueydle.fun/)
 
 ## Current Limitations
 Some limitations that I can fix, but as of now are not important:
 - You can get the same episode multiple times in a row due to the nature of randomness
 - No slash commands
 - No leaderboard capabilities
-- Only 87 (soon 91) different image episodes (all are from on [Blueydle](https://blueydle.fun/).)
+- Only 96 different image episodes (all are from on [Blueydle](https://blueydle.fun/).)
 - Can't currently do any server specific stuff
 These limitations are only in the current version, and are not a representation of what is not possible.
 
@@ -62,8 +66,7 @@ These limitations are only in the current version, and are not a representation 
 Here's some planned features:
 - Server settings that can be edited by admins/owners of each server through commands [working on]
 - Daily mode (Server-wide guessing at a specified time set by admins) [working on]
-- Slash commands [confused by]
-- Image Mode updates from [Blueydle](https://blueydle.fun/) [working on]
+- Slash commands [confused by, might cancel]
 - Servers and Users can choose between [Image](https://github.com/AwesomeParley/BlueyBot#image-mode) and [Text Only](https://github.com/AwesomeParley/BlueyBot#text-mode) modes [working on]
-- Settings explanations inside [```settings.txt```](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt) [working on]
+- Settings explanations inside [`settings.txt`](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt) [planned]
 - Much more (TBD)
