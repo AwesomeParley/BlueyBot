@@ -1,6 +1,6 @@
 import asyncio
 import discord
-from discord import app_commands #will use when ready to add slash commands
+from discord.ext import tasks
 import random
 import os
 import json
@@ -16,6 +16,7 @@ def create_default_settings():
     config = configparser.ConfigParser()
     config['DEFAULT'] = {
         'Token': 'Insert Bot Token Here',
+        'Owner ID': '0',
         'Seconds to respond': '120',
         'Allow cooperative': 'True',
         'Allow daily': 'False',
@@ -48,6 +49,7 @@ def read_settings():
     config.read('settings.txt')
     settings = {
         'Token': config.get('DEFAULT', 'Token'),
+        'Owner ID': config.getint('DEFAULT', 'Owner ID'),
         'Seconds to respond': config.getint('DEFAULT', 'Seconds to respond'),
         'Allow cooperative': config.getboolean('DEFAULT', 'Allow cooperative'),
         'Allow daily': config.getboolean('DEFAULT', 'Allow daily'),
@@ -68,6 +70,7 @@ if not os.path.exists('server_settings.json'):
 #Read settings from settings.txt
 settings = read_settings()
 token = settings['Token']
+ownerID = settings['Owner ID']
 seconds_to_respond = settings['Seconds to respond']
 cooperative = settings['Allow cooperative']
 daily = settings['Allow daily'] #To Be Implemented
@@ -158,6 +161,7 @@ else:
 async def on_ready():
     print('Logged in as {0.user} and ready for some Bluey episode guessing Action.'.format(client))
     get_servers()
+    dailyMode.start()
 
 async def on_guild_join(guild):
     print(f'Joined a new guild: {guild.name} (ID: {guild.id})')
@@ -176,7 +180,7 @@ async def on_message(message):
             message.channel.send(f"Sorry, you took too long to answer! (limit is 120 seconds.)\ncanceling...")
             return ""
     # Boring Server Setup that will take ages to program :/
-    if message.content == "!setupserver" or message.content == "!serversetup":
+    if message.content == "!setupbot" or message.content == "!botsetup":
         try:
             server_id = str(message.guild.id)
         except:
@@ -246,7 +250,7 @@ async def on_message(message):
                 else:
                     i = True
                     while i:
-                        await ans.reply(f"Sorry, I couldn't understand you!\nWhat timezone are you in? (e.g., 'America/New_York')")
+                        await ans.reply(f"Sorry, I couldn't understand you!\nWhat timezone are you in? (e.g., 'EST' for Eastern Standard Time)")
                         ans = await wait_for_message()
                         if ans == "" or ans.content.lower() == "nvm" or ans.content == command:
                             return
@@ -286,7 +290,22 @@ async def on_message(message):
             else:
                 await ans.reply(f"Alright! Daily Mode will be off!\nCongrats! You have set up {client.user.name} in your server!")
                 server_settings["server_settings"][server_id]["daily"] = False
-                
+        if ownerID == message.author.id:
+            await ans.reply(f"Oh wait, <@{message.author.id}>! Since you own this bot, do you want this server to be a test server?")
+            ans = await wait_for_message()
+            if ans == "" or ans.content.lower() == "nvm" or ans.content == command:
+                return
+            while not(ans.content.lower() in ('yes', 'y', 'true', 't', '1', 'enable', 'on') or ans.content.lower() in ('no', 'n', 'false', 'f', '0', 'disable', 'off')):
+                await ans.reply("Sorry, I couldn't understand you!\nDo you want this server to be a test server?\nAccepted answers: \"yes\", \"no\".")
+                ans = await wait_for_message()
+                if ans == "" or ans.content.lower() == "nvm" or ans.content == command:
+                    return
+            if ans.content.lower() in ('yes', 'y', 'true', 't', '1', 'enable', 'on'):
+                await ans.reply("Alright! This will be a test server.")
+                server_settings["server_settings"][server_id]["test_server"] = True
+            else:
+                await ans.reply("Alright! This will *not* be a test server.")
+                server_settings["server_settings"][server_id]["test_server"] = False
         update_server_settings(server_settings)
         return
 
@@ -298,14 +317,6 @@ async def on_message(message):
             if last_word.isdigit():
                 return int(last_word)
             return None
-        def randEpisode():
-            if not forceTextOnly:
-                x = random.randint(1, episode_amount)
-                while x == 44 or x == 45: #Will fix eventually, but for right now, just don't use those
-                    x = random.randint(1, episode_amount)
-                return x
-            else:
-                return random.randint(1, 147) #There are 147 episodes avalible currently.
         try:
             server_id = message.guild.id
             if server_settings["server_settings"][server_id]["test_server"] == True:
@@ -328,7 +339,10 @@ async def on_message(message):
                         else:
                             file = discord.File(f, filename='nice_try.jpg') # Named "nice_try.jpg" so that the smart people get trolled.
                     if not max_attempts == 1:
-                        guess_amount = f'You are on guess {y}/{max_attempts}. '
+                        if cooperative:
+                            guess_amount = f'You are on guess {y*2+z}/{max_attempts*2}. '
+                        else:
+                            guess_amount = f'You are on guess {y}/{max_attempts}. '
                     else:
                         guess_amount = ''
                     await message.reply(f'{guess_amount}Guess the episode.', file=file)
@@ -341,7 +355,10 @@ async def on_message(message):
                         else:
                             description = episode_description.strip() if episode_description else None
                     if not max_attempts == 1:
-                        guess_amount = f'You are on guess {y}/{max_attempts}. '
+                        if cooperative:
+                            guess_amount = f'You are on guess {y*2+z}/{max_attempts*2}. '
+                        else:
+                            guess_amount = f'You are on guess {y}/{max_attempts}. '
                     else:
                         guess_amount = ''
                     if y > 1 and reactions: #instead of sending a whole extra message each time they get it wrong, just edit the previous message the bot sent. Also this only is helpful if reactions are on.
@@ -410,6 +427,15 @@ async def on_message(message):
             await message.reply(f"**Ah Biscuits!**\nThis episode of Bluey was called: *{episode}*")
         return
 
+def randEpisode():
+    if not forceTextOnly:
+        x = random.randint(1, episode_amount)
+        while x == 44 or x == 45: #Will fix eventually, but for right now, just don't use those
+            x = random.randint(1, episode_amount)
+        return x
+    else:
+        return random.randint(1, 147) #There are 147 episodes avalible currently.
+
 # gets the episode name
 def get_episode(x):
     with open(episodes_file) as f:
@@ -437,6 +463,7 @@ def add_server(guild):
     "daily": False,
     "daily_time": "14:00",
     "daily_channel": 1,
+    "daily_guess_amount": 3,
     "allow_cooperative_mode": True,
     "test_server": False
     }
@@ -450,6 +477,44 @@ def find_line_number(filename, search_string):
                 return line_number
     return -1
 
+#checks if it's time for a daily mode in any server
+@tasks.loop(seconds=60)
+async def dailyMode():
+    if daily:
+        now = datetime.utcnow()
+        for server in client.guilds: 
+            utc_time = datetime.strptime(server_settings["server_settings"][str(server.id)]['daily_time'], "%H:%M")
+            if str(server.id) in server_settings["server_settings"] and server_settings["server_settings"][str(server.id)]["daily"] and utc_time.hour == now.hour and utc_time.minute == now.minute:
+                await dailyModeRun(str(server.id))
+
+#run a daily mode in a server
+async def dailyModeRun(serverID):
+    channel = client.get_channel(server_settings['server_settings'][serverID]['daily_channel'])
+    x = randEpisode()
+    y = 1
+    episode = get_episode(x)
+    guess_amount = int(server_settings["server_settings"][str(serverID)]['daily_guess_amount'])
+    if guess_amount > 1:
+        add_es = 'es'
+    else:
+        add_es = ''
+    if not forceTextOnly:
+        # get files
+        filename = f'images\\{x}_{y}.jpg'
+        with open(filename, 'rb') as f:
+            if spoilers: 
+                file = discord.File(f, filename='SPOILER_nice_try.jpg') 
+            else:
+                file = discord.File(f, filename='nice_try.jpg')
+        await channel.send(f"# Welocme to Today's Blueydle!\nYour goal is to try and guess the Bluey episode name based on the images below. Each {guess_amount} guess{add_es} we will add another image from the episode to make it easier. Now with that out of the way...\n## Guess the Episode!", file=file)
+        def check(m):
+            return m.channel == channel
+        guess = await client.wait_for('message', check=check)
+        #add way to check
+    else:
+        pass
+
+#login to discord as bot
 try:
     client.run(token)
 except:

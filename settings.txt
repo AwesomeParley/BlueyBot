@@ -1,5 +1,6 @@
 [DEFAULT]
 token = Insert Bot Token Here
+owner id = 0
 seconds to respond = 120
 allow cooperative = True
 allow daily = False
