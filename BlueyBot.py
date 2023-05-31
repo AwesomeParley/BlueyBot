@@ -33,6 +33,8 @@ def create_default_settings():
 def update_server_settings(server_settings):
     with open("server_settings.json", "w") as file:
         json.dump(server_settings, file, indent=4)
+    with open("server_settings.json", "r") as file:
+        server_settings = json.load(file)
 
 def create_server_settings():
     # Create the initial server settings dictionary
@@ -96,7 +98,7 @@ else:
         update_server_settings(server_settings)
 
 if(token == 'Insert Bot Token Here'):
-    print("Change \"Insert Bot Token Here\" in setting.txt to your discord bot token before running!")
+    print("⚠️ Change \"Insert Bot Token Here\" in setting.txt to your discord bot token before running! ⚠️")
     time.sleep(30) # added this so people using the exe or just running the python on it's own can read the message above.
     exit()
 else:
@@ -114,11 +116,11 @@ if (not forceTextOnly) or allowAfterImages:
     if sorted_files:
         episode_amount = int(sorted_files[-1].split("_")[0])
     elif not forceTextOnly:
-        print("No downloaded images found. Please download them to use Image Mode.\nIf you don't plan on using image mode, set \"text only\" mode to True in settings.txt.")
+        print("⚠️ No downloaded images found. Please download them to use Image Mode. ⚠️\nIf you don't plan on using image mode, set \"text only\" mode to True in settings.txt")
         time.sleep(30)
         exit()
     else:
-        print("No downloaded images found. Please download them to use After Images.\nIf you don't plan on using After Images, set \"allow after images\" mode to False in settings.txt.")
+        print("⚠️ No downloaded images found. Please download them to use After Images. ⚠️\nIf you don't plan on using After Images, set \"allow after images\" mode to False in settings.txt")
         time.sleep(30)
         exit()
     if (allowDL and allowImageUpdate) or (allowDL and (datetime.today().weekday() == 5)):
@@ -327,7 +329,8 @@ async def on_message(message):
         except:
             x = randEpisode()
         episode = get_episode(x)
-        print(f"Episode ID: {x}")
+        if server_settings["server_settings"][str(server_id)]['test_server']:
+            print(f"Episode ID: {x}")
         y = 1
         while y <= max_attempts:
             if z == 0:
@@ -339,7 +342,7 @@ async def on_message(message):
                         else:
                             file = discord.File(f, filename='nice_try.jpg') # Named "nice_try.jpg" so that the smart people get trolled.
                     if not max_attempts == 1:
-                        if cooperative:
+                        if cooperative and message.content.endswith("coop"):
                             guess_amount = f'You are on guess {y*2+z}/{max_attempts*2}. '
                         else:
                             guess_amount = f'You are on guess {y}/{max_attempts}. '
@@ -355,7 +358,7 @@ async def on_message(message):
                         else:
                             description = episode_description.strip() if episode_description else None
                     if not max_attempts == 1:
-                        if cooperative:
+                        if cooperative and message.content.endswith("coop"):
                             guess_amount = f'You are on guess {y*2+z}/{max_attempts*2}. '
                         else:
                             guess_amount = f'You are on guess {y}/{max_attempts}. '
@@ -375,7 +378,7 @@ async def on_message(message):
             try: # wait for a message in that same channel by that same person. 
                 guess = await client.wait_for('message', check=check, timeout=seconds_to_respond)
             except asyncio.TimeoutError:
-                await message.channel.send(f"Sorry, you took too long to guess! (limit is {seconds_to_respond} seconds.)\nThis episode of bluey was called *{episode}*")
+                await message.channel.send(f"Sorry, you took too long to guess! (limit is {seconds_to_respond} seconds.)\nThis episode of Bluey was called *{episode}*")
                 return
 
             if any(guess.content.startswith(item) for item in [command, '!serversetup', '!setupserver']): #checks if they sent a command instead
@@ -487,6 +490,16 @@ async def dailyMode():
             if str(server.id) in server_settings["server_settings"] and server_settings["server_settings"][str(server.id)]["daily"] and utc_time.hour == now.hour and utc_time.minute == now.minute:
                 await dailyModeRun(str(server.id))
 
+@tasks.loop(minutes=10)
+async def update_server_settings_30_min():
+    update_server_settings()
+    print("✅ Updated Server Settings")
+
+@tasks.loop(hours=5*24)
+async def downloadImages():
+    if allowDL:
+        pass # download images
+
 #run a daily mode in a server
 async def dailyModeRun(serverID):
     channel = client.get_channel(server_settings['server_settings'][serverID]['daily_channel'])
@@ -498,26 +511,71 @@ async def dailyModeRun(serverID):
         add_es = 'es'
     else:
         add_es = ''
-    if not forceTextOnly:
-        # get files
-        filename = f'images\\{x}_{y}.jpg'
-        with open(filename, 'rb') as f:
-            if spoilers: 
-                file = discord.File(f, filename='SPOILER_nice_try.jpg') 
+    if not forceTextOnly: #Image Mode
+        z = 0
+        while y <= 5 and z <= 5:
+            # get image
+            filename = f'images\\{x}_{y}.jpg'
+            with open(filename, 'rb') as f:
+                if spoilers: 
+                    file = discord.File(f, filename='SPOILER_nice_try.jpg') 
+                else:
+                    file = discord.File(f, filename='nice_try.jpg')
+            # send message with image
+            if (y == 1 and z == 0):
+                message = await channel.send(f"# Welocme to Today's Blueydle!\nYour goal is to try and guess the Bluey episode name based on the images below. Each {guess_amount} guess{add_es} we will add another image from the episode to make it easier. Now with that out of the way...\n## Guess the Episode!", file=file)
+            elif z == 0:
+                await channel.send(f"## You have used up {(y-1)*guess_amount}/{guess_amount*5} guesses so far!\nSince that's a muliple of {guess_amount}, here's a new image!", file=file)
+            # get return message
+            def check(m):
+                return m.channel == channel and not(m.author == client.user)
+            try:
+                guess = await client.wait_for('message', check=check, timeout=86395)
+            except asyncio.TimeoutError:
+                await message.channel.send(f"Sorry, everyone took too long to guess! Today's episode of Bluey was called *{episode}*")
+                return
+            # check if it's correct
+            if guess.content.replace('.', '', -1).replace(' ', '', -1).lower() == episode.replace('.', '', -1).replace(' ', '', -1).lower():
+                # if correct, add ✅ reaction and tell player they got it. 
+                try:
+                    await guess.add_reaction('✅')
+                except:
+                    print(f"unable to react to {guess.author}\'s message with ✅")
+                if allowAfterImages and y < 5:
+                    files = []
+                    for y in range(y+1, 6):
+                        file_path = f'images\\{x}_{y}.jpg'
+                        files.append(discord.File(file_path))
+                    await guess.reply(content = f"## Wackadoo! You got it <@{guess.author.id}>!\nThis episode of Bluey was called: *{episode}*", files=files)
+                else:
+                    await guess.reply(f"## Wackadoo! You got it <@{guess.author.id}>!\nThis episode of Bluey was called: *{episode}*")
+                return
             else:
-                file = discord.File(f, filename='nice_try.jpg')
-        await channel.send(f"# Welocme to Today's Blueydle!\nYour goal is to try and guess the Bluey episode name based on the images below. Each {guess_amount} guess{add_es} we will add another image from the episode to make it easier. Now with that out of the way...\n## Guess the Episode!", file=file)
-        def check(m):
-            return m.channel == channel
-        guess = await client.wait_for('message', check=check)
-        #add way to check
-    else:
-        pass
+                # if not correct add ❌ reaction
+                try:
+                    await guess.add_reaction('❌')
+                except:
+                    print(f"unable to react to {guess.author}\'s message with ❌ in a Daily.")
+                # check if this is the last guess the player can make
+                if (y)*guess_amount == guess_amount*5 and z+1 == guess_amount:
+                    # if it is the last guess the player can make, tell them the answer. 
+                    await message.reply(f"## Ah Biscuits!\nThis episode of Bluey was called: *{episode}*")
+                    return
+                # if it isn't the last guess they can make, add to the counter. 
+                if(z+1 == guess_amount):
+                    z=0
+                    y+=1
+                else:
+                    z+=1
+    else: #Text Mode not even gonna deal with until I get image mode working
+            #insert Text mode here
+        return
 
 #login to discord as bot
 try:
     client.run(token)
 except:
-    print(f"Your token \"{token}\" is not valid or there was an error.\nPlease check the Token in \"settings.txt\" and try agian.")
+    # if login gives an error, tell the user and stop the program after 30 seconds
+    print(f"⚠️ Your token \"{token}\" is not valid or there was an error.\nPlease check the Token in \"settings.txt\" and try agian. ⚠️")
     time.sleep(30)
     exit()
