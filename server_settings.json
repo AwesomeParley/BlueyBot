@@ -1,5 +1,35 @@
 {
-    "image_update_counter": 0,
-    "server_ids": [],
-    "server_settings": {}
+    "image_update_counter": 55,
+    "server_ids": [
+        838576622537801778,
+        858530589267197984
+    ],
+    "server_settings": {
+        "838576622537801778": {
+            "server_name": "Everyone Is Here!",
+            "server_command": "!guess",
+            "default_mode": 1,
+            "force_mode": false,
+            "daily": false,
+            "daily_time": "14:00",
+            "observe_daylight_time": true,
+            "daily_channel": 1,
+            "daily_guess_amount": 3,
+            "allow_cooperative_mode": true,
+            "test_server": false
+        },
+        "858530589267197984": {
+            "server_name": "AwesomeParley Ideas server",
+            "server_command": "!guess",
+            "default_mode": 1,
+            "force_mode": false,
+            "daily": true,
+            "daily_time": "12:00",
+            "observe_daylight_time": true,
+            "daily_channel": 1111787753194143784,
+            "daily_guess_amount": 3,
+            "allow_cooperative_mode": true,
+            "test_server": true
+        }
+    }
 }

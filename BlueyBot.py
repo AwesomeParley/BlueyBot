@@ -7,6 +7,7 @@ import json
 import configparser
 import time #will be used for daily
 from datetime import datetime #will be used for daily as well
+from datetime import timedelta
 import pytz
 import urllib.request #will be used to get images from Blueydle if any
 from sys import exit
@@ -25,16 +26,21 @@ def create_default_settings():
         'Reactions': 'True',
         'Allow after images': 'True',
         'Force text only': 'False',
-        'Allow image download': 'False'
+        'Allow image download': 'False',
+        'DMs are test mode': 'True'
     }
     with open('settings.txt', 'w') as configfile:
         config.write(configfile)
 
 def update_server_settings(server_settings):
+    with open("server_settings.json", "r") as file:
+        check = json.load(file)
     with open("server_settings.json", "w") as file:
         json.dump(server_settings, file, indent=4)
     with open("server_settings.json", "r") as file:
         server_settings = json.load(file)
+    return not check == server_settings
+
 
 def create_server_settings():
     # Create the initial server settings dictionary
@@ -60,7 +66,8 @@ def read_settings():
         'Reactions': config.getboolean('DEFAULT', 'Reactions'),
         'Allow after images': config.getboolean('DEFAULT', 'Allow after images'),
         'Force text only': config.getboolean('DEFAULT', 'Force text only'),
-        'Allow image download': config.getboolean('DEFAULT', 'Allow image download')
+        'Allow image download': config.getboolean('DEFAULT', 'Allow image download'),
+        'DMs are test mode': config.getboolean('DEFAULT', 'DMs are test mode')
     }
     return settings
 
@@ -75,13 +82,14 @@ token = settings['Token']
 ownerID = settings['Owner ID']
 seconds_to_respond = settings['Seconds to respond']
 cooperative = settings['Allow cooperative']
-daily = settings['Allow daily'] #To Be Implemented
+daily = settings['Allow daily'] 
 command = settings['Command']
 spoilers = settings['Spoilers']
 reactions = settings['Reactions']
 forceTextOnly = settings['Force text only']
 allowAfterImages = settings['Allow after images']
 allowDL = settings['Allow image download']
+DMsAreTestMode = settings['DMs are test mode']
 
 #Read settings from server_settings.json
 with open("server_settings.json", "r") as file:
@@ -105,6 +113,34 @@ else:
     intents = discord.Intents.all()
     client = discord.Client(intents=intents)
 
+def downloadImages(): #try to download any images that have yet to be downloaded from Blueydle (sorry Blueydle owner, I will make it not run often at all.)
+    failDLCount = 0
+    x = episode_amount+1
+    while failDLCount < 7:
+        url = f"https://images.blueydle.fun/{x}/1.jpg"
+        filename = f"images\\{x}_1.jpg"
+        try:
+            urllib.request.urlretrieve(url, filename)
+            print(f"Downloaded {filename}")
+            failDLCount = 0
+            for y in range(2, 6):
+                url = f"https://images.blueydle.fun/{x}/{y}.jpg"
+                filename = f"images\\{x}_{y}.jpg"
+                try:
+                    urllib.request.urlretrieve(url, filename)
+                    print(f"Downloaded {filename}")
+                except urllib.error.HTTPError:
+                    print(f"Failed to download {filename}.")
+        except urllib.error.HTTPError:
+            failDLCount += 1
+            if failDLCount < 7:
+                print(f"Failed to download {filename}. Checking if there are more...")
+            else:
+                print(f"Failed to download {filename}.")
+        x += 1
+    server_settings["image_update_counter"] += 1
+    update_server_settings(server_settings)
+
 if (not forceTextOnly) or allowAfterImages:
     # Get a list of all files in the directory
     files = os.listdir("./images")
@@ -123,34 +159,6 @@ if (not forceTextOnly) or allowAfterImages:
         print("⚠️ No downloaded images found. Please download them to use After Images. ⚠️\nIf you don't plan on using After Images, set \"allow after images\" mode to False in settings.txt")
         time.sleep(30)
         exit()
-    if (allowDL and allowImageUpdate) or (allowDL and (datetime.today().weekday() == 5)):
-        #try to download any images that have yet to be downloaded from Blueydle (sorry Blueydle owner, I will make it not run often at all.)
-        failDLCount = 0
-        x = episode_amount+1
-        while failDLCount < 7:
-            url = f"https://images.blueydle.fun/{x}/1.jpg"
-            filename = f"images\\{x}_1.jpg"
-            try:
-                urllib.request.urlretrieve(url, filename)
-                print(f"Downloaded {filename}")
-                failDLCount = 0
-                for y in range(2, 6):
-                    url = f"https://images.blueydle.fun/{x}/{y}.jpg"
-                    filename = f"images\\{x}_{y}.jpg"
-                    try:
-                        urllib.request.urlretrieve(url, filename)
-                        print(f"Downloaded {filename}")
-                    except urllib.error.HTTPError:
-                        print(f"Failed to download {filename}.")
-            except urllib.error.HTTPError:
-                failDLCount += 1
-                if failDLCount < 7:
-                    print(f"Failed to download {filename}. Checking if there are more...")
-                else:
-                    print(f"Failed to download {filename}.")
-            x += 1
-        server_settings["image_update_counter"] += 1
-        update_server_settings(server_settings)
 
 if not forceTextOnly:
     episodes_file = "episodes.txt"
@@ -163,7 +171,19 @@ else:
 async def on_ready():
     print('Logged in as {0.user} and ready for some Bluey episode guessing Action.'.format(client))
     get_servers()
-    dailyMode.start()
+    try: #added this in case of (very rare) bot death aka wifi gets disconnected
+        dailyMode.start()
+    except:
+        pass
+    try:
+        update_server_settings_45_min.start()
+    except:
+        pass
+    if(allowDL):
+        try:
+            downloadImagesLoop.start()
+        except:
+            pass
 
 async def on_guild_join(guild):
     print(f'Joined a new guild: {guild.name} (ID: {guild.id})')
@@ -181,6 +201,22 @@ async def on_message(message):
         except asyncio.TimeoutError:
             message.channel.send(f"Sorry, you took too long to answer! (limit is 120 seconds.)\ncanceling...")
             return ""
+    # Allows Owner to update the Server Settings manually via Discord
+    if message.content.lower() == "!updatess" or message.content.lower() == "!ssupdate":
+        if not message.author.id == ownerID:
+            return
+        if update_server_settings(server_settings):
+            await message.reply("Server settings have been manually updated.")
+            print(f"✅🕴️ Server Settings have been manually updated by \"{message.author.name}\".")
+        else:
+            await message.reply("Server settings already up to date.")
+            print(f"❌🕴️ \"{message.author.name}\" tried to update the Server Settings manually but they were already up to date.")
+        return
+
+    # Directs the bot users to the bot's GitHub page to make suggestions or report bugs
+    if message.content.lower() == "!botsuggest" or message.content.lower() == "!suggestbot":
+        await message.reply("Thank You for considering to tell us about a new Feature idea or Reporting a Bug with the bot!\nThe website is: https://github.com/AwesomeParley/BlueyBot/issues")
+
     # Boring Server Setup that will take ages to program :/
     if message.content == "!setupbot" or message.content == "!botsetup":
         try:
@@ -206,11 +242,11 @@ async def on_message(message):
                     return
             if ans.content.lower() == ("Image Mode").lower():
                 await ans.reply("Alright! Image Mode it is! Now for the next step!\n\nDo you want to force Image Mode?")
-                server_settings["server_settings"][server_id]["default_mode"] = 1
+                defaultMode = 1
                 mode = "Image"
             else:
                 await ans.reply("Alright! Text Mode it is! Now for the next step!\n\nDo you want to force Text Mode?")
-                server_settings["server_settings"][server_id]["default_mode"] = 2
+                defaultMode = 2
                 mode = "Text"
             ans = await wait_for_message()
             if ans == "" or ans.content.lower() == "nvm" or ans.content == command:
@@ -223,13 +259,17 @@ async def on_message(message):
             if daily:
                 if ans.content.lower() in ('yes', 'y', 'true', 't', '1', 'enable', 'on'):
                     await ans.reply(f"Okay! I will force {mode} Mode.\nNext Step; do you want to enable Daily Mode?")
+                    forceMode = True
                 else:
                     await ans.reply(f"Okay! I will *not* force {mode} Mode.\nNext Step; do you want to enable Daily Mode?")
+                    forceMode = False
             else:
                 if ans.content.lower() in ('yes', 'y', 'true', 't', '1', 'enable', 'on'):
                     await ans.reply(f"Okay! I will force {mode} Mode.\nCongrats! You have set up {client.user.name} in your server!")
+                    forceMode = True
                 else:
                     await ans.reply(f"Okay! I will *not* force {mode} Mode.\nCongrats! You have set up {client.user.name} in your server!")
+                    forceMode = False
         elif daily: 
             await message.reply("Alright! So the first step of setting up the server is picking if you want Daily Mode enabled.\nYou can always type \"nvm\" to stop.")
         if daily:
@@ -243,7 +283,7 @@ async def on_message(message):
                     return
             if ans.content.lower() in ('yes', 'y', 'true', 't', '1', 'enable', 'on'):
                 await ans.reply("Alright! Daily Mode will be on! Now for the next step!\n\nWhat timezone are you in? (e.g., 'America/New_York')\nThe follow-up question needs it.")
-                server_settings["server_settings"][server_id]["daily"] = True
+                serverDaily = True
                 ans = await wait_for_message()
                 if ans == "" or ans.content.lower() == "nvm" or ans.content == command:
                     return
@@ -288,10 +328,10 @@ async def on_message(message):
                 time_obj = time_obj.replace(tzinfo=timezone)
                 await ans.reply(f"Alright! Daily Mode will happen at " + time_obj.strftime("%H:%M")+ " " + timezone.zone + f".\nCongrats! You have set up {client.user.name} in your server!")
                 bot_time = time_obj.astimezone(pytz.timezone('Etc/UTC'))
-                server_settings["server_settings"][server_id]["daily_time"] = bot_time.strftime("%H:%M")
+                dailyTime = bot_time.strftime("%H:%M")
             else:
                 await ans.reply(f"Alright! Daily Mode will be off!\nCongrats! You have set up {client.user.name} in your server!")
-                server_settings["server_settings"][server_id]["daily"] = False
+                serverDaily = False
         if ownerID == message.author.id:
             await ans.reply(f"Oh wait, <@{message.author.id}>! Since you own this bot, do you want this server to be a test server?")
             ans = await wait_for_message()
@@ -304,10 +344,29 @@ async def on_message(message):
                     return
             if ans.content.lower() in ('yes', 'y', 'true', 't', '1', 'enable', 'on'):
                 await ans.reply("Alright! This will be a test server.")
-                server_settings["server_settings"][server_id]["test_server"] = True
+                testServer = True
             else:
                 await ans.reply("Alright! This will *not* be a test server.")
-                server_settings["server_settings"][server_id]["test_server"] = False
+                testServer = False
+        try:
+            server_settings["server_settings"][server_id]["default_mode"] = defaultMode
+            del defaultMode
+            server_settings["server_settings"][server_id]["force_mode"] = forceMode
+            del forceMode
+        except:
+            pass
+        try:
+            server_settings["server_settings"][server_id]["daily"] = serverDaily
+            del serverDaily
+            server_settings["server_settings"][server_id]["daily_time"] = dailyTime
+            del dailyTime
+        except:
+            pass
+        try:
+            server_settings["server_settings"][server_id]["test_server"] = testServer
+            del testServer
+        except:
+            pass
         update_server_settings(server_settings)
         return
 
@@ -321,19 +380,23 @@ async def on_message(message):
             return None
         try:
             server_id = message.guild.id
-            if server_settings["server_settings"][server_id]["test_server"] == True:
+            if server_settings["server_settings"][str(server_id)]["test_server"] == True:
                 if extract_number_from_command(message.content) == None:
                     x = randEpisode()
                 else:
                     x = extract_number_from_command(message.content)
+            DMs = False
         except:
             x = randEpisode()
+            DMs = True
+        
         episode = get_episode(x)
-        if server_settings["server_settings"][str(server_id)]['test_server']:
-            print(f"Episode ID: {x}")
+        if (DMs and DMsAreTestMode) or server_settings["server_settings"][str(server_id)]['test_server']:
+            print(f"[TEST MODE] Episode ID: {x}")
         y = 1
         while y <= max_attempts:
             if z == 0:
+                botTyping = message.channel.typing()
                 if not forceTextOnly: # Image Mode
                     filename = f'images\\{x}_{y}.jpg' # Format the filename string with x and y
                     with open(filename, 'rb') as f:
@@ -343,7 +406,10 @@ async def on_message(message):
                             file = discord.File(f, filename='nice_try.jpg') # Named "nice_try.jpg" so that the smart people get trolled.
                     if not max_attempts == 1:
                         if cooperative and message.content.endswith("coop"):
-                            guess_amount = f'You are on guess {y*2+z}/{max_attempts*2}. '
+                            if not y*2+z-2 == 1:
+                                guess_amount = f'You have used {y*2+z-2}/{max_attempts*2} guesses. '
+                            else:
+                                guess_amount = f'You have used 1/{max_attempts*2} guess. '
                         else:
                             guess_amount = f'You are on guess {y}/{max_attempts}. '
                     else:
@@ -437,9 +503,9 @@ def randEpisode():
             x = random.randint(1, episode_amount)
         return x
     else:
-        return random.randint(1, 147) #There are 147 episodes avalible currently.
+        return random.randint(1, 151) #There are 151 episodes avalible currently.
 
-# gets the episode name
+# gets the episode name 
 def get_episode(x):
     with open(episodes_file) as f:
         episodes = f.readlines()
@@ -465,6 +531,7 @@ def add_server(guild):
     "force_mode": False,
     "daily": False,
     "daily_time": "14:00",
+    "observe_daylight_time": True,
     "daily_channel": 1,
     "daily_guess_amount": 3,
     "allow_cooperative_mode": True,
@@ -487,18 +554,23 @@ async def dailyMode():
         now = datetime.utcnow()
         for server in client.guilds: 
             utc_time = datetime.strptime(server_settings["server_settings"][str(server.id)]['daily_time'], "%H:%M")
-            if str(server.id) in server_settings["server_settings"] and server_settings["server_settings"][str(server.id)]["daily"] and utc_time.hour == now.hour and utc_time.minute == now.minute:
-                await dailyModeRun(str(server.id))
+            if str(server.id) in server_settings["server_settings"] and server_settings["server_settings"][str(server.id)]["observe_daylight_time"]:
+                if str(server.id) in server_settings["server_settings"] and server_settings["server_settings"][str(server.id)]["daily"] and utc_time.hour == (now + timedelta(hours=1)).hour and utc_time.minute == now.minute:
+                    await dailyModeRun(str(server.id))
+            else:
+                if str(server.id) in server_settings["server_settings"] and server_settings["server_settings"][str(server.id)]["daily"] and utc_time.hour == now.hour and utc_time.minute == now.minute:
+                    await dailyModeRun(str(server.id))
 
-@tasks.loop(minutes=10)
-async def update_server_settings_30_min():
-    update_server_settings()
-    print("✅ Updated Server Settings")
+@tasks.loop(minutes=45)
+async def update_server_settings_45_min():
+    wasUpdateSS = update_server_settings(server_settings) 
+    if wasUpdateSS:
+        print("✅ Updated Server Settings")
 
-@tasks.loop(hours=5*24)
-async def downloadImages():
-    if allowDL:
-        pass # download images
+@tasks.loop(hours=3*24)
+async def downloadImagesLoop():
+    print("Checking for new images...")
+    downloadImages()
 
 #run a daily mode in a server
 async def dailyModeRun(serverID):
@@ -523,7 +595,8 @@ async def dailyModeRun(serverID):
                     file = discord.File(f, filename='nice_try.jpg')
             # send message with image
             if (y == 1 and z == 0):
-                message = await channel.send(f"# Welocme to Today's Blueydle!\nYour goal is to try and guess the Bluey episode name based on the images below. Each {guess_amount} guess{add_es} we will add another image from the episode to make it easier. Now with that out of the way...\n## Guess the Episode!", file=file)
+                message = await channel.send(content = f"# Welocme to Today's Blueydle!\nYour goal is to try and guess the Bluey episode name based on the images below. Each {guess_amount} guess{add_es} we will add another image from the episode to make it easier. Now with that out of the way...\n## Guess the Episode!", file=file)
+                del add_es
             elif z == 0:
                 await channel.send(f"## You have used up {(y-1)*guess_amount}/{guess_amount*5} guesses so far!\nSince that's a muliple of {guess_amount}, here's a new image!", file=file)
             # get return message
@@ -556,7 +629,7 @@ async def dailyModeRun(serverID):
                     await guess.add_reaction('❌')
                 except:
                     print(f"unable to react to {guess.author}\'s message with ❌ in a Daily.")
-                # check if this is the last guess the player can make
+                # check if this is the last guess the player can makex
                 if (y)*guess_amount == guess_amount*5 and z+1 == guess_amount:
                     # if it is the last guess the player can make, tell them the answer. 
                     await message.reply(f"## Ah Biscuits!\nThis episode of Bluey was called: *{episode}*")

@@ -1,13 +1,13 @@
 [DEFAULT]
-token = Insert Bot Token Here
-owner id = 0
+token = NzU5NDc3NjU3NDM1MzczNTk5.Gmr42Z.eqMTcBDmy-YwMgkBIsKuzmYcS18IH9ez9-3H5Q
+owner id = 403282008232427531
 seconds to respond = 120
 allow cooperative = True
-allow daily = False
+allow daily = True
 command = !guess
 spoilers = False
 reactions = True
 allow after images = True
 force text only = False
-allow image download = False
-
+allow image download = True
+dms are test mode = True
