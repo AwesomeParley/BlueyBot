@@ -5,8 +5,8 @@ import random
 import os
 import json
 import configparser
-import time #will be used for daily
-from datetime import datetime #will be used for daily as well
+import time
+from datetime import datetime
 from datetime import timedelta
 import pytz
 import urllib.request #will be used to get images from Blueydle if any
@@ -32,16 +32,6 @@ def create_default_settings():
     with open('settings.txt', 'w') as configfile:
         config.write(configfile)
 
-def update_server_settings(server_settings):
-    with open("server_settings.json", "r") as file:
-        check = json.load(file)
-    with open("server_settings.json", "w") as file:
-        json.dump(server_settings, file, indent=4)
-    with open("server_settings.json", "r") as file:
-        server_settings = json.load(file)
-    return not check == server_settings
-
-
 def create_server_settings():
     # Create the initial server settings dictionary
     server_settings = {
@@ -51,6 +41,18 @@ def create_server_settings():
     }
     # Write the initial server settings to a JSON file
     update_server_settings(server_settings)
+
+def update_server_settings(server_settings):
+    if not os.path.exists('server_settings.json'):
+        with open("server_settings.json", "w") as file:
+            json.dump(server_settings, file, indent=4)
+    with open("server_settings.json", "r") as file:
+        check = json.load(file)
+    with open("server_settings.json", "w") as file:
+        json.dump(server_settings, file, indent=4)
+    with open("server_settings.json", "r") as file:
+        server_settings = json.load(file)
+    return not check == server_settings
 
 def read_settings():
     config = configparser.ConfigParser()
@@ -94,16 +96,6 @@ DMsAreTestMode = settings['DMs are test mode']
 #Read settings from server_settings.json
 with open("server_settings.json", "r") as file:
     server_settings = json.load(file)
-if server_settings["image_update_counter"] == 0:
-    allowImageUpdate = True
-else:
-    allowImageUpdate = False
-    if server_settings["image_update_counter"] == 10:
-        server_settings["image_update_counter"] = 0
-        update_server_settings(server_settings)
-    else:
-        server_settings["image_update_counter"] += 1
-        update_server_settings(server_settings)
 
 if(token == 'Insert Bot Token Here'):
     print("⚠️ Change \"Insert Bot Token Here\" in setting.txt to your discord bot token before running! ⚠️")
@@ -563,6 +555,7 @@ async def dailyMode():
 
 @tasks.loop(minutes=45)
 async def update_server_settings_45_min():
+    time.sleep(45)
     wasUpdateSS = update_server_settings(server_settings) 
     if wasUpdateSS:
         print("✅ Updated Server Settings")
