@@ -163,6 +163,8 @@ else:
 async def on_ready():
     print('Logged in as {0.user} and ready for some Bluey episode guessing Action.'.format(client))
     get_servers()
+    if not os.path.exists('server_settings.json'):
+        time.sleep(10)
     try: #added this in case of (very rare) bot death aka wifi gets disconnected
         dailyMode.start()
     except:
@@ -365,23 +367,9 @@ async def on_message(message):
     # Fun Guess Game! 
     if str(message.content).startswith(command):
         z = 0
-        def extract_number_from_command(command):
-            last_word = command.split()[-1]
-            if last_word.isdigit():
-                return int(last_word)
-            return None
-        try:
-            server_id = message.guild.id
-            if server_settings["server_settings"][str(server_id)]["test_server"] == True:
-                if extract_number_from_command(message.content) == None:
-                    x = randEpisode()
-                else:
-                    x = extract_number_from_command(message.content)
-            DMs = False
-        except:
-            x = randEpisode()
-            DMs = True
-        
+        x = randEpisode()
+        print(x)
+        DMs = True
         episode = get_episode(x)
         if (DMs and DMsAreTestMode) or server_settings["server_settings"][str(server_id)]['test_server']:
             print(f"[TEST MODE] Episode ID: {x}")
@@ -545,6 +533,8 @@ async def dailyMode():
     if daily:
         now = datetime.utcnow()
         for server in client.guilds: 
+            if not os.path.exists('server_settings.json'):
+                time.sleep(5)
             utc_time = datetime.strptime(server_settings["server_settings"][str(server.id)]['daily_time'], "%H:%M")
             if str(server.id) in server_settings["server_settings"] and server_settings["server_settings"][str(server.id)]["observe_daylight_time"]:
                 if str(server.id) in server_settings["server_settings"] and server_settings["server_settings"][str(server.id)]["daily"] and utc_time.hour == (now + timedelta(hours=1)).hour and utc_time.minute == now.minute:
@@ -553,17 +543,16 @@ async def dailyMode():
                 if str(server.id) in server_settings["server_settings"] and server_settings["server_settings"][str(server.id)]["daily"] and utc_time.hour == now.hour and utc_time.minute == now.minute:
                     await dailyModeRun(str(server.id))
 
-@tasks.loop(minutes=45)
-async def update_server_settings_45_min():
-    time.sleep(45)
-    wasUpdateSS = update_server_settings(server_settings) 
-    if wasUpdateSS:
-        print("✅ Updated Server Settings")
-
-@tasks.loop(hours=3*24)
+@tasks.loop(hours=24)
 async def downloadImagesLoop():
     print("Checking for new images...")
     downloadImages()
+
+@tasks.loop(minutes=45)
+async def update_server_settings_45_min():
+    wasUpdateSS = update_server_settings(server_settings) 
+    if wasUpdateSS:
+        print("✅ Updated Server Settings")
 
 #run a daily mode in a server
 async def dailyModeRun(serverID):
