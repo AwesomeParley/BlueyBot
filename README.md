@@ -3,6 +3,9 @@ Discord Bot for guessing Bluey Episodes from images and/or descriptions.
 
 This bot is very much inspired by, and based on [Blueydle](https://blueydle.fun/).
 
+## Archived
+I, AwesomeParley, am not going to continue working on this Discord bot anymore, and instead am going to work on other projects. I have archived this project and so if you want to, you can fork this project and continue working on it on your own. 
+
 ## Features
 ### !guess command
 "!guess" is the default command which can be [changed in the settings](https://github.com/AwesomeParley/BlueyBot#settings) if you dislike it, or if it conflicts with other commands other bots may have. There are currently 2 modes for the !guess command; [Image Mode](https://github.com/AwesomeParley/BlueyBot#image-mode) and [Text Mode](https://github.com/AwesomeParley/BlueyBot#text-mode). These modes can be [changed in the settings](https://github.com/AwesomeParley/BlueyBot#settings) as well via the option "Text only". 
@@ -60,13 +63,3 @@ Some limitations that I can fix, but as of now are not important:
 - No leaderboard capabilities
 - Only 96 different image episodes (all are from on [Blueydle](https://blueydle.fun/).)
 - Can't currently do any server specific stuff
-These limitations are only in the current version, and are not a representation of what is not possible.
-
-## Future Features
-Here's some planned features:
-- Server settings that can be edited by admins/owners of each server through commands [working on]
-- Daily mode (Server-wide guessing at a specified time set by admins) [working on]
-- Slash commands [confused by, might cancel]
-- Servers and Users can choose between [Image](https://github.com/AwesomeParley/BlueyBot#image-mode) and [Text Only](https://github.com/AwesomeParley/BlueyBot#text-mode) modes [working on]
-- Settings explanations inside [`settings.txt`](https://github.com/AwesomeParley/BlueyBot/blob/main/settings.txt) [planned]
-- Much more (TBD)
